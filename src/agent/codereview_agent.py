@@ -70,9 +70,11 @@ class CodereviewAgent:
             tool_results = []
             for block in response.content:
                 if block.type == "tool_use":
-                    
-                    
-                    result = self.memory.execute(block.name)
+                    command_name = block.input.get("command")
+                    model_class = COMMAND_MAP[command_name]
+                    parsed_command = TypeAdapter(model_class).validate_python(block.input)
+                    command = model_class(**block.input)
+                    result = self.memory.execute(command)
                     tool_results.append({
                         "type": "tool_result",
                         "tool_use_id": block.id,
