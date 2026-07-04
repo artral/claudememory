@@ -21,5 +21,5 @@ if __name__ == "__main__":
      code_review_agent = CodereviewAgent(memory_path="./memory")
      import os
      print(os.getcwd())
-     file_content = open("./src/my_file.py", "r", encoding="utf-8").read()
-     code_review_agent.review_code(file_content, "my_file.py")
+     file_content = open("./src/my_file_2.jsx", "r", encoding="utf-8").read()
+     code_review_agent.review_code(file_content, "my_file_2.jsx")

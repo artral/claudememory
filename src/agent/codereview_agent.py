@@ -64,22 +64,38 @@ class CodereviewAgent:
                     }
                 ]
                 }
-            )           
-    
-                        # collect tool calls
+            )
+            if response.stop_reason != "tool_use":
+                for block in response.content:
+                    if hasattr(block, "text"):
+                        print(block.text)
+                    
+                user_input = input("Enter your response (or 'exit' to quit): ")
+                if user_input.lower() == "exit":
+                    break  
+                self.messages.append({"role": "user", "content": user_input})
+                continue         
+            # collect tool calls
             tool_results = []
             for block in response.content:
                 if block.type == "tool_use":
-                    command_name = block.input.get("command")
-                    model_class = COMMAND_MAP[command_name]
-                    parsed_command = TypeAdapter(model_class).validate_python(block.input)
-                    command = model_class(**block.input)
-                    result = self.memory.execute(command)
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": block.id,
-                        "content": str(result),
-                    })
+                    try:
+                        command_name = block.input.get("command")
+                        model_class = COMMAND_MAP[command_name]
+                        parsed_command = TypeAdapter(model_class).validate_python(block.input)
+                        command = model_class(**block.input)
+                        result = self.memory.execute(command)
+                        tool_results.append({
+                            "type": "tool_result",
+                            "tool_use_id": block.id,
+                            "content": str(result),
+                        })
+                    except Exception as e:
+                        tool_results.append({
+                            "type": "tool_result",
+                            "tool_use_id": block.id,
+                            "content": f"Error executing tool command: {e}",
+                        })
 
             self.messages.append({"role": "assistant", "content": response.content})
             if tool_results:
